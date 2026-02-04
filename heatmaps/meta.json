@@ -1,0 +1,13 @@
+{
+  "last_updated": "2026-02-03 16:34:27",
+  "files": [
+    "7d.json",
+    "30d.json",
+    "all.json"
+  ],
+  "lots": [
+    "Stadium_Deck",
+    "Athletics_Deck",
+    "Haley_Deck"
+  ]
+}

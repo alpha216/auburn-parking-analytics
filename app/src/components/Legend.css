@@ -1,0 +1,61 @@
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.legend-label {
+  color: #a0a0b0;
+  font-weight: 500;
+}
+
+.legend-gradient {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.gradient-bar {
+  width: 200px;
+  height: 12px;
+  border-radius: 4px;
+  background: linear-gradient(to right, 
+    #10b981, 
+    #84cc16, 
+    #eab308, 
+    #f97316, 
+    #ef4444
+  );
+}
+
+.gradient-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.625rem;
+  color: #6b6b7b;
+}
+
+.legend-no-data {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.no-data-box {
+  width: 24px;
+  height: 12px;
+  background: #2a2a35;
+  border-radius: 4px;
+  border: 1px dashed #6b6b7b;
+}
+
+.legend-no-data span {
+  color: #6b6b7b;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .legend {
+    flex-direction: column;
+  }
+}
