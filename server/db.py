@@ -4,6 +4,10 @@ import os
 import glob
 from datetime import datetime
 from dotenv import load_dotenv
+import pytz
+
+# Central Time zone for CSV imports
+CENTRAL_TZ = pytz.timezone('America/Chicago')
 
 # Load environment variables from .env file
 load_dotenv()
@@ -116,8 +120,9 @@ class DB:
                 batch_size = 100
                 
                 for row in reader:
-                    # Parse timestamp
+                    # Parse timestamp and localize to Central Time
                     timestamp = datetime.strptime(row['timestamp'].strip(), '%Y-%m-%d %H:%M')
+                    timestamp = CENTRAL_TZ.localize(timestamp)  # Make timezone-aware
                     lot_name = row['lot_name'].strip()
                     # Convert lot_name to lot_id using the mapping
                     lot_id = LOT_NAME_TO_ID.get(lot_name)
@@ -190,19 +195,6 @@ class DB:
             print(f"❌ Failed to get row count: {e}")
             return -1
 
-    def clear_table(self):
-        """Clear all data from parking_data table."""
-        try:
-            cursor = self.conn.cursor()
-            cursor.execute("TRUNCATE TABLE parking_data RESTART IDENTITY")
-            self.conn.commit()
-            cursor.close()
-            print("✅ Table cleared successfully!")
-            return True
-        except Exception as e:
-            print(f"❌ Failed to clear table: {e}")
-            return False
-
     def get_data(self, where_clause=""):
         """Get data from parking_data table with optional WHERE clause."""
         try:
@@ -215,6 +207,50 @@ class DB:
         except Exception as e:
             print(f"❌ Failed to get data: {e}")
             return []
+
+    def export_to_csv(self, output_path="parking_data_export.csv"):
+        """Export all parking data to a CSV file."""
+        try:
+            cursor = self.conn.cursor()
+            
+            # Get all data ordered by timestamp
+            cursor.execute("""
+                SELECT 
+                    timestamp AT TIME ZONE 'America/Chicago' as timestamp_cst,
+                    lot_id,
+                    occupied_spots,
+                    available_spots,
+                    (occupied_spots + available_spots) as total_capacity
+                FROM parking_data 
+                ORDER BY timestamp
+            """)
+            rows = cursor.fetchall()
+            cursor.close()
+            
+            if not rows:
+                print("❌ No data to export")
+                return False
+            
+            # Write to CSV
+            with open(output_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                # Header
+                writer.writerow(['timestamp', 'lot_name', 'occupied_spots', 'available_spots', 'total_capacity'])
+                
+                # Data rows - convert lot_id to lot_name
+                for row in rows:
+                    timestamp, lot_id, occupied, available, total = row
+                    lot_name = LOT_INFO.get(str(lot_id), f"Unknown_{lot_id}")
+                    # Format timestamp as YYYY-MM-DD HH:MM
+                    timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M')
+                    writer.writerow([timestamp_str, lot_name, occupied, available, total])
+            
+            print(f"✅ Exported {len(rows)} rows to {output_path}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Failed to export data: {e}")
+            return False
 
     def get_heatmap_data(self, days=None):
         """
@@ -254,12 +290,13 @@ class DB:
             
             # Main aggregation query
             # PostgreSQL DOW: Sun=0, Mon=1, ..., Sat=6
+            # time slot: 0 ~ 288 (5 mins)
             # Convert UTC timestamp to local timezone for correct day/time slot calculation
             query = f"""
                 SELECT 
                     lot_id,
                     EXTRACT(DOW FROM timestamp AT TIME ZONE 'America/Chicago')::int AS day_of_week,
-                    FLOOR((EXTRACT(HOUR FROM timestamp AT TIME ZONE 'America/Chicago') * 60 + EXTRACT(MINUTE FROM timestamp AT TIME ZONE 'America/Chicago')) / 15)::int AS time_slot,
+                    FLOOR((EXTRACT(HOUR FROM timestamp AT TIME ZONE 'America/Chicago') * 60 + EXTRACT(MINUTE FROM timestamp AT TIME ZONE 'America/Chicago')) / 5)::int AS time_slot,
                     ROUND(AVG((occupied_spots::float / NULLIF(occupied_spots + available_spots, 0)) * 100)::numeric, 1) AS avg_occupancy,
                     COUNT(*) AS sample_count
                 FROM parking_data
@@ -267,6 +304,16 @@ class DB:
                 GROUP BY lot_id, day_of_week, time_slot
                 ORDER BY lot_id, day_of_week, time_slot
             """
+
+            """
+             lot_id | day_of_week | time_slot | avg_occupancy | sample_count 
+            --------+-------------+-----------+---------------+--------------
+                  1 |           1 |        90 |          75.0 |            1
+                  2 |           1 |       221 |           0.0 |            1
+                  2 |           2 |       193 |          75.0 |            1
+                  3 |           1 |        90 |         100.0 |            1
+            """
+
             cursor.execute(query)
             rows = cursor.fetchall()
             cursor.close()

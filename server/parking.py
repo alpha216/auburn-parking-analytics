@@ -131,8 +131,9 @@ def main():
     
     while True:
         try:
-            # Get current timestamp
+            # Get current timestamp (truncate to minute for clean DB entries)
             now = datetime.now(CENTRAL_TZ)
+            now = now.replace(second=0, microsecond=0)  # Clean timestamp
             timestamp_str = now.strftime("%Y-%m-%d %H:%M")
             
             # Fetch data from all lots

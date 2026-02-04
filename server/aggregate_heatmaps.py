@@ -6,31 +6,26 @@ Produces:
   - heatmaps/7d.json   (last 7 days)
   - heatmaps/30d.json  (last 30 days)
   - heatmaps/all.json  (all available data)
-
-Each JSON file contains a 7×96 matrix per parking lot:
-  - 7 days (Mon-Sun)
-  - 96 time slots (15-minute intervals: 00:00-00:14, 00:15-00:29, ..., 23:45-23:59)
 """
 import os
 import json
 from datetime import datetime
 from typing import Dict, List, Tuple, Optional
-import numpy as np
-from server.db import DB, LOT_INFO
+from db import DB, LOT_INFO
 
 # Configuration
 OUTPUT_DIR = "./heatmaps"
 LOTS = list(LOT_INFO.values())  # ["Stadium_Deck", "Athletics_Deck", "Haley_Deck"]
 LOT_ID_TO_NAME = {int(k): v for k, v in LOT_INFO.items()}
-TIME_SLOTS = 96  # 24 hours × 4 (15-minute intervals)
+TIME_SLOTS = 288  # 24 hours × 6 (5-minute intervals)
 DAYS_OF_WEEK = 7
 
 def generate_time_labels() -> List[str]:
-    """Generate 96 time slot labels like '00:00~00:14', '00:15~00:29', etc."""
+    """Generate 288 time slot labels like '00:00~00:05', '00:06~00:10', etc."""
     labels = []
     for slot in range(TIME_SLOTS):
-        start_minutes = slot * 15
-        end_minutes = start_minutes + 14
+        start_minutes = slot * 5
+        end_minutes = start_minutes + 5
         start_h, start_m = divmod(start_minutes, 60)
         end_h, end_m = divmod(end_minutes, 60)
         labels.append(f"{start_h:02d}:{start_m:02d}~{end_h:02d}:{end_m:02d}")
@@ -50,6 +45,11 @@ def compute_heatmap_from_db(db: DB, days: Optional[int]) -> Tuple[Dict[str, Dict
         results_dict contains matrix and sample_counts for each lot
     """
     # Get aggregated data from database
+    """
+    rows: (lot_id, day_of_week, time_slot, avg_occupancy, sample_count)
+    from_date: start date of data
+    to_date: end date of data
+    """
     rows, from_date, to_date = db.get_heatmap_data(days)
     
     # Initialize numpy arrays for each lot
@@ -57,15 +57,14 @@ def compute_heatmap_from_db(db: DB, days: Optional[int]) -> Tuple[Dict[str, Dict
     matrices = {}
     counts = {}
     for lot_id, lot_name in LOT_ID_TO_NAME.items():
-        matrices[lot_id] = np.full((DAYS_OF_WEEK, TIME_SLOTS), None, dtype=object)
-        counts[lot_id] = np.zeros((DAYS_OF_WEEK, TIME_SLOTS), dtype=int)
+        matrices[lot_id] = [[None for _ in range(TIME_SLOTS)] for _ in range(DAYS_OF_WEEK)]
+        counts[lot_id] = [[0 for _ in range(TIME_SLOTS)] for _ in range(DAYS_OF_WEEK)]
     
-    # Fill matrices from query results
     # Each row: (lot_id, day_of_week, time_slot, avg_occupancy, sample_count)
     for row in rows:
-        lot_id, day, slot, avg_occ, count = row
-        if lot_id in matrices and 0 <= day < DAYS_OF_WEEK and 0 <= slot < TIME_SLOTS:
-            matrices[lot_id][day][slot] = float(avg_occ) if avg_occ is not None else None
+        lot_id, day, slot, avg_occ, count = row  # 1 | 1 | 90 | 75.0 | 1
+        if (lot_id in matrices) and (0 <= day < DAYS_OF_WEEK) and (0 <= slot < TIME_SLOTS) :
+            matrices[lot_id][day][slot] = float(avg_occ) if (avg_occ is not None) else None
             counts[lot_id][day][slot] = int(count)
     
     # Convert numpy arrays to nested lists for JSON serialization
@@ -134,6 +133,7 @@ def main():
     db = DB()
     db.test_connection()
     
+    # Return if no data found in database
     row_count = db.get_row_count()
     if row_count == 0:
         print("No data found in database. Exiting.")
@@ -149,9 +149,12 @@ def main():
     ranges = [
         (7, "7d.json"),
         (30, "30d.json"),
+        (90, "90d.json"),
+        (120, "120d.json"),
         (None, "all.json"),
     ]
     
+    # Generate heatmaps for each range
     for days, filename in ranges:
         range_name = f"{days}d" if days else "all"
         print(f"\nGenerating {range_name} heatmap...")
@@ -167,7 +170,7 @@ def main():
     # Generate meta file with last update time
     meta = {
         "last_updated": reference_date.strftime("%Y-%m-%d %H:%M:%S"),
-        "files": ["7d.json", "30d.json", "all.json"],
+        "files": ["7d.json", "30d.json", "90d.json", "120d.json", "all.json"],
         "lots": LOTS
     }
     meta_path = os.path.join(OUTPUT_DIR, "meta.json")
