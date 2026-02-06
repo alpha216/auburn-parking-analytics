@@ -120,10 +120,15 @@ def generate_heatmap_json(db: DB, days: Optional[int], reference_date: datetime)
     }
 
 
-def main():
-    """Main entry point for heatmap generation."""
+def generate_all_heatmaps():
+    """
+    Generate all heatmap JSON files.
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
     print("=" * 60)
-    print("Parking Heatmap Aggregator (PostgreSQL + NumPy)")
+    print("Parking Heatmap Aggregator")
     print("=" * 60)
     
     # Create output directory
@@ -138,7 +143,7 @@ def main():
     if row_count == 0:
         print("No data found in database. Exiting.")
         db.close_connection()
-        return
+        return False
     
     print(f"\n📊 Total rows in database: {row_count}")
     
@@ -154,7 +159,6 @@ def main():
         (None, "all.json"),
     ]
     
-    # Generate heatmaps for each range
     for days, filename in ranges:
         range_name = f"{days}d" if days else "all"
         print(f"\nGenerating {range_name} heatmap...")
@@ -183,6 +187,13 @@ def main():
     print("\n" + "=" * 60)
     print("Done! Heatmap JSON files are ready.")
     print("=" * 60)
+    
+    return True
+
+
+def main():
+    """Standalone mode: generate heatmaps when run directly."""
+    generate_all_heatmaps()
 
 
 if __name__ == "__main__":

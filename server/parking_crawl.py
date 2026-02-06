@@ -111,78 +111,75 @@ def fetch_haley_data():
         print("Error fetching Haley Deck data:", error)
 
 
+def crawl_once(db):
+    """
+    Perform a single crawl and save data to database.
+    
+    Args:
+        db: Database connection (DB instance)
+    
+    Returns:
+        bool: True if any data was saved, False otherwise
+    """
+    try:
+        # Get current timestamp (truncate to minute for clean DB entries)
+        now = datetime.now(CENTRAL_TZ)
+        now = now.replace(second=0, microsecond=0)  # Clean timestamp
+        timestamp_str = now.strftime("%Y-%m-%d %H:%M")
+        
+        # Fetch data from all lots
+        stadiumData = fetch_stadium_data()
+        athleticsData = fetch_athletics_data()
+        haleyData = fetch_haley_data()
+        
+        saved_any = False
+        
+        # Save to PostgreSQL
+        if stadiumData:
+            lot_id = LOT_NAME_TO_ID.get("Stadium_Deck")
+            db.add_data(now, lot_id, stadiumData[0], stadiumData[1])
+            print(f"[{timestamp_str}] Stadium Deck: {stadiumData[0]} occupied, {stadiumData[1]} available")
+            saved_any = True
+        
+        if athleticsData:
+            lot_id = LOT_NAME_TO_ID.get("Athletics_Deck")
+            db.add_data(now, lot_id, athleticsData[0], athleticsData[1])
+            print(f"[{timestamp_str}] Athletics Deck: {athleticsData[0]} occupied, {athleticsData[1]} available")
+            saved_any = True
+        
+        if haleyData:
+            lot_id = LOT_NAME_TO_ID.get("Haley_Deck")
+            db.add_data(now, lot_id, haleyData[0], haleyData[1])
+            print(f"[{timestamp_str}] Haley Deck: {haleyData[0]} occupied, {haleyData[1]} available")
+            saved_any = True
+        
+        if saved_any:
+            print(f"[{timestamp_str}] ✅ Data saved to PostgreSQL")
+        
+        return saved_any
+        
+    except Exception as e:
+        print(f"Error during crawl: {e}")
+        return False
+
+
 def main():
-    """Main function that crawls data every 5 minutes and saves to PostgreSQL."""
-    print("Starting parking data crawler...")
-    print(f"Crawl interval: every {FETCH_INTERVAL_MINUTES} minutes")
+    """Standalone mode: crawl once when run directly."""
+    print("Running single crawl...")
     print("-" * 50)
     
-    # Connect to database
     db = DB()
     db.test_connection()
     print("-" * 50)
     
-    # Wait for first aligned interval
-    initial_wait = get_seconds_until_next_interval()
-    if initial_wait > 0:
-        next_run = datetime.now(CENTRAL_TZ) + timedelta(seconds=initial_wait)
-        print(f"Waiting {initial_wait:.0f} seconds until next interval at {next_run.strftime('%H:%M')}...")
-        time.sleep(initial_wait)
+    success = crawl_once(db)
     
-    while True:
-        try:
-            # Get current timestamp (truncate to minute for clean DB entries)
-            now = datetime.now(CENTRAL_TZ)
-            now = now.replace(second=0, microsecond=0)  # Clean timestamp
-            timestamp_str = now.strftime("%Y-%m-%d %H:%M")
-            
-            # Fetch data from all lots
-            stadiumData = fetch_stadium_data()
-            athleticsData = fetch_athletics_data()
-            haleyData = fetch_haley_data()
-            
-            # Save to PostgreSQL
-            if stadiumData:
-                lot_id = LOT_NAME_TO_ID.get("Stadium_Deck")
-                db.add_data(now, lot_id, stadiumData[0], stadiumData[1])
-                print(f"[{timestamp_str}] Stadium Deck: {stadiumData[0]} occupied, {stadiumData[1]} available")
-            
-            if athleticsData:
-                lot_id = LOT_NAME_TO_ID.get("Athletics_Deck")
-                db.add_data(now, lot_id, athleticsData[0], athleticsData[1])
-                print(f"[{timestamp_str}] Athletics Deck: {athleticsData[0]} occupied, {athleticsData[1]} available")
-            
-            if haleyData:
-                lot_id = LOT_NAME_TO_ID.get("Haley_Deck")
-                db.add_data(now, lot_id, haleyData[0], haleyData[1])
-                print(f"[{timestamp_str}] Haley Deck: {haleyData[0]} occupied, {haleyData[1]} available")
-            
-            if stadiumData or athleticsData or haleyData:
-                print(f"[{timestamp_str}] ✅ Data saved to PostgreSQL")
-            
-            # Calculate wait time until next interval
-            wait_seconds = get_seconds_until_next_interval()
-            if wait_seconds < 5:
-                wait_seconds = FETCH_INTERVAL_MINUTES * 60
-            
-            next_run = datetime.now(CENTRAL_TZ) + timedelta(seconds=wait_seconds)
-            print(f"[{timestamp_str}] Next crawl at {next_run.strftime('%H:%M')} ({wait_seconds:.0f} seconds)...")
-            print("-" * 50)
-            
-            time.sleep(wait_seconds)
-            
-        # Error handlings
-        except KeyboardInterrupt:
-            print("\nCrawler stopped by user.")
-            db.close_connection()
-            break
-        except Exception as e:
-            print(f"Error during crawl: {e}")
-            wait_seconds = get_seconds_until_next_interval()
-            if wait_seconds < 60:
-                wait_seconds = FETCH_INTERVAL_MINUTES * 60
-            print(f"Retrying in {wait_seconds:.0f} seconds...")
-            time.sleep(wait_seconds)
+    db.close_connection()
+    
+    if success:
+        print("✅ Crawl completed successfully")
+    else:
+        print("❌ Crawl failed or no data fetched")
 
 
 if __name__ == "__main__":

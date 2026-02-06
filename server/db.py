@@ -208,9 +208,26 @@ class DB:
             print(f"❌ Failed to get data: {e}")
             return []
 
-    def export_to_csv(self, output_path="parking_data_export.csv"):
-        """Export all parking data to a CSV file."""
+    def export_to_csv(self, output_path=None):
+        """
+        Export all parking data to a CSV file.
+        
+        Args:
+            output_path: Path to save CSV. If None, uses ../data/week_{year}_{week}.csv
+        """
         try:
+            # Generate default path with year and week number
+            if output_path is None:
+                now = datetime.now()
+                year = now.year
+                week = now.isocalendar()[1]
+                output_path = f"../data/week_{year}_{week:02d}.csv"
+            
+            # Ensure directory exists
+            output_dir = os.path.dirname(output_path)
+            if output_dir:
+                os.makedirs(output_dir, exist_ok=True)
+            
             cursor = self.conn.cursor()
             
             # Get all data ordered by timestamp
@@ -251,6 +268,7 @@ class DB:
         except Exception as e:
             print(f"❌ Failed to export data: {e}")
             return False
+
 
     def get_heatmap_data(self, days=None):
         """
