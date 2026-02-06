@@ -5,10 +5,12 @@ pkill -f starting.py
 sleep 1
 
 # change directory
-cd /home/ubuntu/ParkingGet/server
+cd /home/ubuntu/auburn-parking-analytics/server
 
+
+        
 # run parking.py
-nohup /home/ubuntu/ParkingGet/venv/bin/python -u start.py > nohup.out 2>&1 &
+nohup /home/ubuntu/auburn-parking-analytics/venv/bin/python -u start.py > nohup.out 2>&1 &
 
 # check process
 ps aux | grep start.py

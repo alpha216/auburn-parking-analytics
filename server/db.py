@@ -164,8 +164,12 @@ class DB:
             print(f"❌ Failed to import {csv_path}: {e}")
             return False
 
-    def import_all_csvs(self, directory="parking_data"):
-        """Import all CSV files from a directory."""
+    def import_all_csvs(self, directory=None):
+        # Default to parking_data relative to this script's location
+        if directory is None:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            directory = os.path.join(script_dir, "parking_data")
+
         csv_pattern = os.path.join(directory, "*.csv")
         csv_files = glob.glob(csv_pattern)
         
@@ -213,7 +217,7 @@ class DB:
         Export all parking data to a CSV file.
         
         Args:
-            output_path: Path to save CSV. If None, uses ../data/week_{year}_{week}.csv
+            output_path: Path to save CSV. If None, uses ./data/week_{year}_{week}.csv
         """
         try:
             # Generate default path with year and week number
@@ -221,7 +225,7 @@ class DB:
                 now = datetime.now()
                 year = now.year
                 week = now.isocalendar()[1]
-                output_path = f"../data/week_{year}_{week:02d}.csv"
+                output_path = f"./data/week_{year}_{week:02d}.csv"
             
             # Ensure directory exists
             output_dir = os.path.dirname(output_path)
@@ -347,5 +351,6 @@ if __name__ == "__main__":
     db = DB()
     db.test_connection()
     # db.create_table()
-    db.import_all_csvs()
+    # db.import_all_csvs()
+    db.export_to_csv()
     db.close_connection()
