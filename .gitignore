@@ -231,5 +231,5 @@ __marimo__/
 # Log files created by default by the nohup command
 nohup.out
 
-/heatmaps
+/server/heatmaps
 .DS_Store

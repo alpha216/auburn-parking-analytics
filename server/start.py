@@ -107,9 +107,9 @@ def main():
     print("-" * 60)
     
     # Connect to database
-    db = DB()
-    db.test_connection()
-    print("-" * 60)
+        db = DB()
+        db.test_connection()
+        print("-" * 60)
     
     # Track last daily run
     last_daily_date = None
