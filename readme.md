@@ -20,3 +20,4 @@
   - color: occupancy rate
   - square cell
   - hover: Time range & Occupancy rate & Sample count
+  - All heatmap is inside on window, no scroll

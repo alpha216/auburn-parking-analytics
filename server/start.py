@@ -9,18 +9,96 @@ Manages all scheduled tasks:
 """
 import time
 import subprocess
+import os
 from datetime import datetime, timedelta
+from typing import List
 import pytz
+from dotenv import load_dotenv
+import boto3
 
 from db import DB
 from parking_crawl import crawl_once
 from aggregate_heatmaps import generate_all_heatmaps
+
+# Load environment variables (R2 credentials, DB creds, etc.)
+load_dotenv()
 
 # Central Time zone
 CENTRAL_TZ = pytz.timezone('US/Central')
 
 # Configuration
 CRAWL_INTERVAL_MINUTES = 5
+DEFAULT_HEATMAP_FILES = ["7d.json", "30d.json", "90d.json", "120d.json", "all.json", "meta.json"]
+
+
+def _normalized_prefix(prefix: str) -> str:
+    if not prefix:
+        return ""
+    prefix = prefix.lstrip("/")
+    return prefix if prefix.endswith("/") else f"{prefix}/"
+
+
+def upload_heatmaps_to_r2(output_dir: str, filenames: List[str]) -> bool:
+    """Upload heatmap JSON files to Cloudflare R2, replacing existing objects."""
+
+    access_key = os.getenv("R2_ACCESS_KEY_ID")
+    secret_key = os.getenv("R2_SECRET_ACCESS_KEY")
+    endpoint = os.getenv("R2_ENDPOINT")
+    bucket = os.getenv("R2_BUCKET")
+    prefix = _normalized_prefix(os.getenv("R2_PREFIX", ""))
+
+    if not all([access_key, secret_key, endpoint, bucket]):
+        print("❌ Missing R2 configuration. Required: R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_ENDPOINT, R2_BUCKET")
+        return False
+
+    session = boto3.session.Session()
+    client = session.client(
+        "s3",
+        endpoint_url=endpoint,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        region_name=os.getenv("R2_REGION", "auto"),
+    )
+
+    # Build list of existing local files to upload
+    local_files = []
+    for name in filenames:
+        path = os.path.join(output_dir, name)
+        if os.path.isfile(path):
+            local_files.append((name, path))
+        else:
+            print(f"⚠️  Heatmap file missing, skipping: {path}")
+
+    if not local_files:
+        print("❌ No heatmap files found to upload.")
+        return False
+
+    # Delete previous objects (same keys) from R2
+    keys_to_delete = [{"Key": f"{prefix}{name}"} for name, _ in local_files]
+    try:
+        client.delete_objects(Bucket=bucket, Delete={"Objects": keys_to_delete, "Quiet": True})
+        print(f"🧹 Deleted {len(keys_to_delete)} previous heatmap objects from R2.")
+    except Exception as e:
+        print(f"❌ Failed to delete previous heatmap objects: {e}")
+        return False
+
+    # Upload updated files
+    for name, path in local_files:
+        key = f"{prefix}{name}"
+        try:
+            client.upload_file(
+                path,
+                bucket,
+                key,
+                ExtraArgs={"ContentType": "application/json"},
+            )
+            print(f"☁️  Uploaded: {key}")
+        except Exception as e:
+            print(f"❌ Failed to upload {path}: {e}")
+            return False
+
+    print("✅ R2 upload complete.")
+    return True
 
 
 def get_seconds_until_next_interval(interval_minutes):
@@ -82,7 +160,11 @@ def run_daily_tasks(db):
     
     # 1. Generate heatmaps
     print("\n[1/3] Generating heatmaps...")
-    generate_all_heatmaps()
+    heatmaps_ok = generate_all_heatmaps()
+    if heatmaps_ok:
+        output_dir = os.path.join(os.getcwd(), "heatmaps")
+        print("\n[1b/3] Uploading heatmaps to R2...")
+        upload_heatmaps_to_r2(output_dir, DEFAULT_HEATMAP_FILES)
     
     # 2. Export CSV
     print("\n[2/3] Exporting CSV...")
