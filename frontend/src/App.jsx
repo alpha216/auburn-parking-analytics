@@ -1,9 +1,9 @@
-import './index.css';
-import useHeatmapData from './hooks/useHeatmapData';
-import Header from './components/Header';
-import HeatmapGrid from './components/HeatmapGrid';
-import Legend from './components/Legend';
-import { Analytics } from '@vercel/analytics/next';
+import "./index.css";
+import useHeatmapData from "./hooks/useHeatmapData";
+import Header from "./components/Header";
+import HeatmapGrid from "./components/HeatmapGrid";
+import Legend from "./components/Legend";
+import { Analytics } from "@vercel/analytics/react";
 
 export default function App() {
   const {
@@ -24,7 +24,11 @@ export default function App() {
   } = useHeatmapData();
 
   if (error) {
-    return <div className="loading" style={{ color: '#f44336' }}>Error: {error}</div>;
+    return (
+      <div className="loading" style={{ color: "#f44336" }}>
+        Error: {error}
+      </div>
+    );
   }
 
   return (
@@ -53,8 +57,8 @@ export default function App() {
         ) : (
           <>
             {selectedLots
-              .filter(lot => processed?.lots[lot])
-              .map(lot => (
+              .filter((lot) => processed?.lots[lot])
+              .map((lot) => (
                 <HeatmapGrid
                   key={lot}
                   lotName={lot}
