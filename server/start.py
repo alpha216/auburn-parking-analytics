@@ -10,11 +10,17 @@ Manages all scheduled tasks:
 import time
 import subprocess
 import os
+import sys
 from datetime import datetime, timedelta
 from typing import List
 import pytz
 from dotenv import load_dotenv
 import boto3
+
+# Ensure we are running from the Project Root
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+os.chdir(PROJECT_ROOT)
+sys.path.append(os.path.join(PROJECT_ROOT, "server"))
 
 from db import DB
 from parking_crawl import crawl_once
@@ -125,27 +131,30 @@ def is_midnight(now, last_daily_date):
 def git_commit_and_push():
     """Commit and push data changes to git."""
     try:
-        # Change to project root
-        subprocess.run(["git", "add", "data/"], cwd="..", check=True)
+        # CWD is already project root
+        subprocess.run(["git", "add", "data/"], check=True)
         
         now = datetime.now(CENTRAL_TZ)
         commit_msg = f"Daily data export - {now.strftime('%Y-%m-%d')}"
         
         result = subprocess.run(
             ["git", "commit", "-m", commit_msg],
-            cwd="..",
             capture_output=True,
             text=True
         )
         
         if result.returncode == 0:
-            subprocess.run(["git", "push"], cwd="..", check=True)
+            subprocess.run(["git", "push"], check=True)
             print(f"✅ Git commit and push successful: {commit_msg}")
             return True
         else:
-            # No changes to commit
-            print("ℹ️ No changes to commit")
-            return True
+            # Check if it failed because there was nothing to commit
+            if "nothing to commit" in result.stdout:
+                print("ℹ️ No changes to commit")
+                return True
+            else:
+                print(f"❌ Git commit failed: {result.stderr}")
+                return False
             
     except Exception as e:
         print(f"❌ Git operation failed: {e}")
@@ -162,7 +171,8 @@ def run_daily_tasks(db):
     print("\n[1/3] Generating heatmaps...")
     heatmaps_ok = generate_all_heatmaps()
     if heatmaps_ok:
-        output_dir = os.path.join(os.getcwd(), "heatmaps")
+        # output_dir is heatmaps folder in project root
+        output_dir = os.path.join(PROJECT_ROOT, "heatmaps")
         print("\n[1b/3] Uploading heatmaps to R2...")
         upload_heatmaps_to_r2(output_dir, DEFAULT_HEATMAP_FILES)
     
@@ -181,23 +191,20 @@ def run_daily_tasks(db):
 
 def main():
     """Main scheduler loop."""
-    print("=" * 60)
     print("🚀 Auburn Parking Analytics - Central Scheduler")
-    print("=" * 60)
     print(f"Crawl interval: every {CRAWL_INTERVAL_MINUTES} minutes")
     print("Daily tasks: 12:00 AM (heatmaps, CSV export, git commit)")
-    print("-" * 60)
     
     # Connect to database
-        db = DB()
-        db.test_connection()
-        print("-" * 60)
+    db = DB()
+    db.test_connection()
+    print("-" * 60)
     
     # Track last daily run
     last_daily_date = None
     last_crawl_time = None
     
-    print("Scheduler started. Press Ctrl+C to stop.\n")
+    print("Scheduler started.\n")
     
     try:
         while True:
