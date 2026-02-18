@@ -71,8 +71,8 @@ export default function App() {
             <Legend />
           </>
         )}
-      </div>
       <Analytics />
+      </div>
     </>
   );
 }
