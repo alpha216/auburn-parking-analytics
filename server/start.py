@@ -178,7 +178,7 @@ def run_daily_tasks(db):
     
     # 2. Export CSV
     print("\n[2/3] Exporting CSV...")
-    db.export_to_csv()  # Uses default week_{year}_{week}.csv naming
+    db.export_to_csv()  # Exports all data split by week to ./data/
     
     # 3. Git commit and push
     print("\n[3/3] Committing to git...")

@@ -212,25 +212,16 @@ class DB:
             print(f"❌ Failed to get data: {e}")
             return []
 
-    def export_to_csv(self, output_path=None):
+    def export_to_csv(self, output_dir="./data"):
         """
-        Export all parking data to a CSV file.
+        Export all parking data to CSV files, split by ISO week.
         
         Args:
-            output_path: Path to save CSV. If None, uses ./data/week_{year}_{week}.csv
+            output_dir: Directory to save CSV files. Defaults to ./data
         """
         try:
-            # Generate default path with year and week number
-            if output_path is None:
-                now = datetime.now()
-                year = now.year
-                week = now.isocalendar()[1]
-                output_path = f"./data/week_{year}_{week:02d}.csv"
-            
             # Ensure directory exists
-            output_dir = os.path.dirname(output_path)
-            if output_dir:
-                os.makedirs(output_dir, exist_ok=True)
+            os.makedirs(output_dir, exist_ok=True)
             
             cursor = self.conn.cursor()
             
@@ -252,21 +243,45 @@ class DB:
                 print("❌ No data to export")
                 return False
             
-            # Write to CSV
-            with open(output_path, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                # Header
-                writer.writerow(['timestamp', 'lot_name', 'occupied_spots', 'available_spots', 'total_capacity'])
+            # Group rows by year and week
+            grouped_data = {}
+            for row in rows:
+                timestamp = row[0]
+                # Use ISO calendar (year, week, weekday)
+                iso_year, iso_week, _ = timestamp.isocalendar()
+                key = (iso_year, iso_week)
                 
-                # Data rows - convert lot_id to lot_name
-                for row in rows:
-                    timestamp, lot_id, occupied, available, total = row
-                    lot_name = LOT_INFO.get(str(lot_id), f"Unknown_{lot_id}")
-                    # Format timestamp as YYYY-MM-DD HH:MM
-                    timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M')
-                    writer.writerow([timestamp_str, lot_name, occupied, available, total])
+                if key not in grouped_data:
+                    grouped_data[key] = []
+                grouped_data[key].append(row)
             
-            print(f"✅ Exported {len(rows)} rows to {output_path}")
+            total_files = 0
+            total_rows = 0
+            
+            print(f"📦 Exporting data split by {len(grouped_data)} weeks...")
+            
+            for (year, week), week_rows in grouped_data.items():
+                filename = f"week_{year}_{week:02d}.csv"
+                filepath = os.path.join(output_dir, filename)
+                
+                with open(filepath, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    # Header
+                    writer.writerow(['timestamp', 'lot_name', 'occupied_spots', 'available_spots', 'total_capacity'])
+                    
+                    # Data rows
+                    for row in week_rows:
+                        timestamp, lot_id, occupied, available, total = row
+                        lot_name = LOT_INFO.get(str(lot_id), f"Unknown_{lot_id}")
+                        # Format timestamp as YYYY-MM-DD HH:MM
+                        timestamp_str = timestamp.strftime('%Y-%m-%d %H:%M')
+                        writer.writerow([timestamp_str, lot_name, occupied, available, total])
+                
+                total_files += 1
+                total_rows += len(week_rows)
+                # print(f"  - {filename}: {len(week_rows)} rows")
+            
+            print(f"✅ Exported {total_rows} rows across {total_files} files in {output_dir}")
             return True
             
         except Exception as e:
