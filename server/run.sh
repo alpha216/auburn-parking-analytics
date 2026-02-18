@@ -1,5 +1,5 @@
 # kill existing process
-pkill -f starting.py
+pkill -f start.py
 
 # wait for 1 second
 sleep 1
