@@ -14,3 +14,6 @@ nohup /home/ubuntu/auburn-parking-analytics/venv/bin/python -u start.py > nohup.
 
 # check process
 ps aux | grep start.py
+
+# To enter venv
+# source /home/ubuntu/auburn-parking-analytics/venv/bin/activate
