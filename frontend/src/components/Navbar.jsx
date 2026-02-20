@@ -19,8 +19,8 @@ export default function Navbar() {
           Heatmap
         </Link>
         <Link
-          to="/parking-stat"
-          className={`navbar__link ${location.pathname === "/parking-stat" ? "navbar__link--active" : ""}`}
+          to="/parkingstat"
+          className={`navbar__link ${location.pathname === "/parkingstat" ? "navbar__link--active" : ""}`}
         >
           EV Status
         </Link>

@@ -36,7 +36,7 @@ export default function useHeatmapData() {
     // UI state
     const [selectedLots, setSelectedLots] = useState([]);
     const [dayRange, setDayRange] = useState('all');
-    const [cellSize, setCellSize] = useState('5M');
+    const [cellSize, setCellSize] = useState('15M');
     const [startHour, setStartHour] = useState(0);
     const [endHour, setEndHour] = useState(24);
 

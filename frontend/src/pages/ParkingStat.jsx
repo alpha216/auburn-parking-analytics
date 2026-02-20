@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import Navbar from "../components/Navbar";
 
 const LOTS = [
   {
@@ -113,51 +114,54 @@ export default function ParkingStat() {
   }, [fetchAll]);
 
   return (
-    <div className="parking-stat">
-      <header className="parking-stat__header">
-        <h1 className="parking-stat__title">Auburn University Parking</h1>
-        <p className="parking-stat__subtitle">
-          Live availability of EV charging stations.
-        </p>
-      </header>
+    <>
+      <Navbar />
+      <div className="parking-stat">
+        <header className="parking-stat__header">
+          <h1 className="parking-stat__title">Auburn University Parking</h1>
+          <p className="parking-stat__subtitle">
+            Live availability of EV charging stations.
+          </p>
+        </header>
 
-      <div className="parking-stat__cards">
-        {LOTS.map((lot) => {
-          const r = results[lot.id];
-          const isFull = r && !r.error && r.ava === 0;
-          return (
-            <a
-              key={lot.id}
-              href={lot.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="parking-stat__card"
-            >
-              <h2 className="parking-stat__card-name">{lot.name}</h2>
-              <div
-                className={`parking-stat__card-data ${isFull ? "parking-stat__card-data--full" : ""}`}
-                data-lot={lot.id}
+        <div className="parking-stat__cards">
+          {LOTS.map((lot) => {
+            const r = results[lot.id];
+            const isFull = r && !r.error && r.ava === 0;
+            return (
+              <a
+                key={lot.id}
+                href={lot.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="parking-stat__card"
               >
-                {!r ? (
-                  <span className="parking-stat__dots">
-                    <span>.</span>
-                    <span>.</span>
-                    <span>.</span>
-                  </span>
-                ) : r.error ? (
-                  <span className="parking-stat__error">{r.error}</span>
-                ) : (
-                  `${r.occ} occupied, ${r.ava} available`
-                )}
-              </div>
-            </a>
-          );
-        })}
-      </div>
+                <h2 className="parking-stat__card-name">{lot.name}</h2>
+                <div
+                  className={`parking-stat__card-data ${isFull ? "parking-stat__card-data--full" : ""}`}
+                  data-lot={lot.id}
+                >
+                  {!r ? (
+                    <span className="parking-stat__dots">
+                      <span>.</span>
+                      <span>.</span>
+                      <span>.</span>
+                    </span>
+                  ) : r.error ? (
+                    <span className="parking-stat__error">{r.error}</span>
+                  ) : (
+                    `${r.occ} occupied, ${r.ava} available`
+                  )}
+                </div>
+              </a>
+            );
+          })}
+        </div>
 
-      <footer className="parking-stat__footer">
-        Data is fetched live. Last updated: {lastUpdated}
-      </footer>
-    </div>
+        <footer className="parking-stat__footer">
+          Data is fetched live. Last updated: {lastUpdated}
+        </footer>
+      </div>
+    </>
   );
 }

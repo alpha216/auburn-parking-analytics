@@ -1,80 +1,18 @@
-import useHeatmapData from "./hooks/useHeatmapData";
-import Navbar from "./components/Navbar";
-import Header from "./components/Header";
-import HeatmapGrid from "./components/HeatmapGrid";
-import Legend from "./components/Legend";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Analytics } from "@vercel/analytics/react";
+import HomePage from "./pages/HomePage.jsx";
+import Heatmap from "./pages/Heatmap.jsx";
+import ParkingStat from "./pages/ParkingStat.jsx";
 
 export default function App() {
-  const {
-    meta,
-    processed,
-    loading,
-    error,
-    selectedLots,
-    dayRange,
-    cellSize,
-    startHour,
-    endHour,
-    setDayRange,
-    setCellSize,
-    setStartHour,
-    setEndHour,
-    toggleLot,
-  } = useHeatmapData();
-
-  if (error) {
-    return (
-      <>
-        <Navbar />
-        <div className="loading" style={{ color: "#f44336" }}>
-          Error: {error}
-        </div>
-      </>
-    );
-  }
-
   return (
-    <>
-      <Navbar />
-      <Header
-        lots={meta?.lots || []}
-        selectedLots={selectedLots}
-        toggleLot={toggleLot}
-        dayRange={dayRange}
-        setDayRange={setDayRange}
-        cellSize={cellSize}
-        setCellSize={setCellSize}
-        startHour={startHour}
-        endHour={endHour}
-        setStartHour={setStartHour}
-        setEndHour={setEndHour}
-        dateRange={processed?.range}
-      />
-
-      <div className="main">
-        {loading ? (
-          <div className="loading">
-            <div className="loading__spinner" />
-            Loading heatmap data…
-          </div>
-        ) : (
-          <>
-            {selectedLots
-              .filter((lot) => processed?.lots[lot])
-              .map((lot) => (
-                <HeatmapGrid
-                  key={lot}
-                  lotName={lot}
-                  matrix={processed.lots[lot].matrix}
-                  counts={processed.lots[lot].counts}
-                  xLabels={processed.xLabels}
-                  yLabels={processed.yLabels}
-                />
-              ))}
-            <Legend />
-          </>
-        )}
-      </div>
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/heatmap" element={<Heatmap />} />
+        <Route path="/parkingstat" element={<ParkingStat />} />
+      </Routes>
+      <Analytics />
+    </BrowserRouter>
   );
 }
