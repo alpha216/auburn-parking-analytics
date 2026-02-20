@@ -32,7 +32,6 @@ body,
 #root {
   height: 100%;
   width: 100%;
-  overflow: hidden;
 }
 
 body {
@@ -59,7 +58,13 @@ body {
 }
 
 .header__title {
-  font-family: -apple-system, BlinkMacSystemFont, Trebuchet MS, Roboto, Ubuntu, sans-serif;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    Trebuchet MS,
+    Roboto,
+    Ubuntu,
+    sans-serif;
   font-style: normal;
   font-weight: 600;
   font-size: 24px;
@@ -153,7 +158,6 @@ body {
     transform: translateY(0);
   }
 }
-
 
 .dropdown__item {
   display: flex;
@@ -403,4 +407,213 @@ body {
   color: var(--text-muted);
   margin-left: auto;
   font-weight: 500;
+}
+
+/* ─── Home Page ─── */
+.home {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 48px;
+  background: var(--bg-primary);
+}
+
+.home__hero {
+  text-align: center;
+}
+
+.home__title {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #4fc3f7, #81d4fa, #b3e5fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.home__subtitle {
+  margin-top: 12px;
+  font-size: 16px;
+  color: var(--text-secondary);
+}
+
+.home__cards {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 720px;
+}
+
+.home__card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  width: 340px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.home__card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 8px 32px rgba(79, 195, 247, 0.12);
+}
+
+.home__card-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.home__card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.home__card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.home__card-desc {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.home__card-arrow {
+  font-size: 20px;
+  color: var(--text-muted);
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.home__card:hover .home__card-arrow {
+  color: var(--accent);
+  transform: translateX(4px);
+}
+
+/* ─── Parking Status Page ─── */
+.parking-stat {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
+  background: var(--bg-primary);
+}
+
+.parking-stat__header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.parking-stat__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.parking-stat__subtitle {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.parking-stat__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.parking-stat__card {
+  display: block;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.parking-stat__card:hover {
+  border-color: var(--accent);
+}
+
+.parking-stat__card-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.parking-stat__card-data {
+  font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
+  font-size: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(79, 195, 247, 0.08);
+  color: var(--accent);
+  text-align: center;
+}
+
+.parking-stat__card-data--full {
+  background: rgba(244, 67, 54, 0.12);
+  color: #ef5350;
+}
+
+.parking-stat__dots span {
+  animation: blink 1.4s infinite both;
+  font-size: 24px;
+  color: var(--text-muted);
+}
+.parking-stat__dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.parking-stat__dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.parking-stat__error {
+  color: #ef5350;
+}
+
+.parking-stat__footer {
+  margin-top: 32px;
+  font-size: 12px;
+  color: var(--text-muted);
 }

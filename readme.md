@@ -13,7 +13,7 @@ A full-stack data pipeline that crawls parking lot occupancy data every 5 minute
 ```
   Auburn Parking API          Oracle Cloud (Ubuntu)              Cloudflare
   ┌───────────────┐     ┌──────────────────────────────┐    ┌──────────────┐
-  │  FoPark API   │────▶│  Python Crawler (every 5min) │    │  R2 Bucket   │
+  │  AUParking API   │────▶│  Python Crawler (every 5min) │    │  R2 Bucket   │
   │  (3 decks)    │     │         │                    │    │  (JSON store)│
   └───────────────┘     │         ▼                    │    └──────┬───────┘
                         │    PostgreSQL DB             │           │
@@ -86,7 +86,7 @@ auburn-parking-analytics/
 
 ### 1. Data Collection — `parking_crawl.py`
 
-A Python crawler queries Auburn University's FoPark API for real-time EV charger occupancy across three parking decks:
+A Python crawler queries Auburn University's AUParking API for real-time EV charger occupancy across three parking decks:
 
 - **Stadium Deck** — 4 EV spots (identified by GPS coordinates)
 - **Athletics Deck** — 4 EV spots (identified by index position in status array)
@@ -195,7 +195,7 @@ Client-side aggregation in `useHeatmapData.js` allows instant switching between 
 ## Data Pipeline Summary
 
 ```
-FoPark API  ──(every 5min)──▶  PostgreSQL
+AUParking API  ──(every 5min)──▶  PostgreSQL
                                     │
                               (daily midnight)
                                     │

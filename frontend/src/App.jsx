@@ -1,9 +1,7 @@
-import "./index.css";
 import useHeatmapData from "./hooks/useHeatmapData";
 import Header from "./components/Header";
 import HeatmapGrid from "./components/HeatmapGrid";
 import Legend from "./components/Legend";
-import { Analytics } from "@vercel/analytics/react";
 
 export default function App() {
   const {
@@ -71,7 +69,6 @@ export default function App() {
             <Legend />
           </>
         )}
-      <Analytics />
       </div>
     </>
   );
