@@ -42,7 +42,7 @@ export default function useHeatmapData() {
 
     // Fetch meta on mount
     useEffect(() => {
-        fetch('https://r2-worker.cgiasdf.workers.dev/parking-stat/meta.json')
+        fetch('https://api.alphacar.dev/parking-stat/meta.json')
             .then(r => r.json())
             .then(m => {
                 setMeta(m);
@@ -56,7 +56,7 @@ export default function useHeatmapData() {
         if (!meta) return;
         setLoading(true);
         const file = dayRange === 'all' ? 'all.json' : `${dayRange}.json`;
-        fetch(`https://r2-worker.cgiasdf.workers.dev/parking-stat/${file}`)
+        fetch(`https://api.alphacar.dev/parking-stat/${file}`)
             .then(r => r.json())
             .then(d => {
                 setRawData(d);

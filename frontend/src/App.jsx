@@ -1,4 +1,5 @@
 import useHeatmapData from "./hooks/useHeatmapData";
+import Navbar from "./components/Navbar";
 import Header from "./components/Header";
 import HeatmapGrid from "./components/HeatmapGrid";
 import Legend from "./components/Legend";
@@ -23,14 +24,18 @@ export default function App() {
 
   if (error) {
     return (
-      <div className="loading" style={{ color: "#f44336" }}>
-        Error: {error}
-      </div>
+      <>
+        <Navbar />
+        <div className="loading" style={{ color: "#f44336" }}>
+          Error: {error}
+        </div>
+      </>
     );
   }
 
   return (
     <>
+      <Navbar />
       <Header
         lots={meta?.lots || []}
         selectedLots={selectedLots}

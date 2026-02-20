@@ -16,7 +16,7 @@ export default function Header({
 }) {
   return (
     <header className="header">
-      <h1 className="header__title">Auburn Parking Analytics</h1>
+      <h1 className="header__title">Parking Heatmap</h1>
       <div className="header__controls">
         <LotSelector
           lots={lots}
@@ -88,10 +88,17 @@ function LotSelector({ lots, selectedLots, toggleLot }) {
         <span
           className={`control__chevron ${open ? "control__chevron--open" : ""}`}
         >
-        <svg xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 18 18" width="18" height="18">
-          <path fill="currentColor" d="M3.92 7.83 9 12.29l5.08-4.46-1-1.13L9 10.29l-4.09-3.6-.99 1.14Z">
-          </path></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 18 18"
+            width="18"
+            height="18"
+          >
+            <path
+              fill="currentColor"
+              d="M3.92 7.83 9 12.29l5.08-4.46-1-1.13L9 10.29l-4.09-3.6-.99 1.14Z"
+            ></path>
+          </svg>
         </span>
       </button>
       {open && (
@@ -132,10 +139,17 @@ function SimpleDropdown({ icon, label, options, value, onChange }) {
         <span
           className={`control__chevron ${open ? "control__chevron--open" : ""}`}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 18 18" width="18" height="18">
-          <path fill="currentColor" d="M3.92 7.83 9 12.29l5.08-4.46-1-1.13L9 10.29l-4.09-3.6-.99 1.14Z">
-          </path></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 18 18"
+            width="18"
+            height="18"
+          >
+            <path
+              fill="currentColor"
+              d="M3.92 7.83 9 12.29l5.08-4.46-1-1.13L9 10.29l-4.09-3.6-.99 1.14Z"
+            ></path>
+          </svg>
         </span>
       </button>
       {open && (
